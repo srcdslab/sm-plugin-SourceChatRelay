@@ -6,7 +6,7 @@
 #pragma semicolon 1
 
 #define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "2.2.0"
+#define PLUGIN_VERSION "2.2.1"
 
 #define MAX_EVENT_NAME_LENGTH 128
 #define MAX_COMMAND_LENGTH 512
@@ -352,6 +352,8 @@ public void OnPluginStart()
 	g_cPlayerEvent = CreateConVar("rf_scr_event_player", "0", "Enable player connect/disconnect events", FCVAR_NONE, true, 0.0, true, 1.0);
 	
 	g_cMapEvent = CreateConVar("rf_scr_event_map", "0", "Enable map start/end events", FCVAR_NONE, true, 0.0, true, 1.0);
+
+	RegAdminCmd("sm_reloadscr", Command_ReloadSCR, ADMFLAG_BAN, "Reload the plugin to try debug SCR");
 	
 	AutoExecConfig(true);
 	
@@ -951,4 +953,13 @@ bool SupportsHexColor(EngineVersion e)
 		default:
 			return false;
 	}
+}
+
+public Action Command_ReloadSCR(int client, int args)
+{
+	char sFilename[256];
+	GetPluginFilename(INVALID_HANDLE, sFilename, sizeof(sFilename));
+	ServerCommand("sm plugins reload %s", sFilename);
+	ReplyToCommand(client, "[SCR] Please wait.. Plugin is reloading..");
+	return Plugin_Handled;
 }
