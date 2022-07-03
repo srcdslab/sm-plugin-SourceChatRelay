@@ -481,6 +481,7 @@ void ConnectRelay()
 public Action Timer_Reconnect(Handle timer)
 {
 	ConnectRelay();
+	return Plugin_Continue;
 }
 
 void StartReconnectTimer()
@@ -491,28 +492,28 @@ void StartReconnectTimer()
 	CreateTimer(10.0, Timer_Reconnect);
 }
 
-public int OnSocketDisconnected(Handle socket, any arg)
+public void OnSocketDisconnected(Handle socket, any arg)
 {	
 	StartReconnectTimer();
 	
 	PrintToServer("Source Chat Relay: Socket disconnected");
 }
 
-public int OnSocketError(Handle socket, int errorType, int errorNum, any ary)
+public void OnSocketError(Handle socket, int errorType, int errorNum, any ary)
 {
 	StartReconnectTimer();
 	
 	LogError("Source Chat Relay socket error %i (errno %i)", errorType, errorNum);
 }
 
-public int OnSocketConnected(Handle socket, any arg)
+public void OnSocketConnected(Handle socket, any arg)
 {
 	AuthenticateMessage(g_sToken).Dispatch();
 
 	PrintToServer("Source Chat Relay: Socket Connected");
 }
 
-public int OnSocketReceive(Handle socket, const char[] receiveData, int dataSize, any arg)
+public void OnSocketReceive(Handle socket, const char[] receiveData, int dataSize, any arg)
 {	
 	HandlePackets(receiveData, dataSize);
 }
