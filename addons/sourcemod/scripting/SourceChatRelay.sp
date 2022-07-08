@@ -962,5 +962,6 @@ public Action Command_ReloadSCR(int client, int args)
 	GetPluginFilename(INVALID_HANDLE, sFilename, sizeof(sFilename));
 	ServerCommand("sm plugins reload %s", sFilename);
 	ReplyToCommand(client, "[SCR] Please wait.. Plugin is reloading..");
+	LogAction(-1, -1, "\"%L\" reloaded SourceChatRelay Plugin", client);
 	return Plugin_Handled;
 }
