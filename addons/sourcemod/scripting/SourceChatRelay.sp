@@ -5,9 +5,6 @@
 
 #pragma semicolon 1
 
-#define PLUGIN_AUTHOR "Fishy"
-#define PLUGIN_VERSION "2.2.1"
-
 #define MAX_EVENT_NAME_LENGTH 128
 #define MAX_COMMAND_LENGTH 512
 
@@ -318,9 +315,9 @@ methodmap EventMessage < BaseMessage
 public Plugin myinfo = 
 {
 	name = "Source Chat Relay",
-	author = PLUGIN_AUTHOR,
+	author = "Fishy",
 	description = "Communicate between Discord & In-Game, monitor server without being in-game, control the flow of messages and user base engagement!",
-	version = PLUGIN_VERSION,
+	version = "2.2.1",
 	url = "https://keybase.io/RumbleFrog"
 };
 
@@ -336,8 +333,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-	CreateConVar("rf_scr_version", PLUGIN_VERSION, "Source Chat Relay Version", FCVAR_REPLICATED | FCVAR_SPONLY | FCVAR_DONTRECORD | FCVAR_NOTIFY);
-
 	g_cHost = CreateConVar("rf_scr_host", "127.0.0.1", "Relay Server Host", FCVAR_PROTECTED);
 
 	g_cPort = CreateConVar("rf_scr_port", "57452", "Relay Server Port", FCVAR_PROTECTED);
