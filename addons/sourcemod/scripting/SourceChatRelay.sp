@@ -28,6 +28,7 @@ ConVar g_cFlag;
 ConVar g_cHostname;
 
 // Event convars
+ConVar g_cBotPlayerEvent;
 ConVar g_cPlayerEvent;
 ConVar g_cMapEvent;
 
@@ -317,7 +318,7 @@ public Plugin myinfo =
 	name = "Source Chat Relay",
 	author = "Fishy",
 	description = "Communicate between Discord & In-Game, monitor server without being in-game, control the flow of messages and user base engagement!",
-	version = "2.2.1",
+	version = "2.2.2",
 	url = "https://keybase.io/RumbleFrog"
 };
 
@@ -344,6 +345,8 @@ public void OnPluginStart()
 	g_cHostname = CreateConVar("rf_scr_hostname", "", "The hostname/displayname to send with messages. If left empty, it will use the server's hostname", FCVAR_NONE);
 
 	// Start basic event convars
+	g_cBotPlayerEvent = CreateConVar("rf_scr_event_botplayer", "0", "Enable bot player connect/disconnect events", FCVAR_NONE, true, 0.0, true, 1.0);
+
 	g_cPlayerEvent = CreateConVar("rf_scr_event_player", "0", "Enable player connect/disconnect events", FCVAR_NONE, true, 0.0, true, 1.0);
 	
 	g_cMapEvent = CreateConVar("rf_scr_event_map", "0", "Enable map start/end events", FCVAR_NONE, true, 0.0, true, 1.0);
@@ -394,6 +397,10 @@ public void OnPluginStart()
 		Param_String);
 
 	g_evEngine = GetEngineVersion();
+
+	// hook real player connects and disconnects
+	HookEvent("player_connect", ePlayerJoinLeave);
+	HookEvent("player_disconnect", ePlayerJoinLeave);
 }
 
 public void OnConfigsExecuted()
@@ -461,7 +468,7 @@ public void OnConfigsExecuted()
 
 		GetCurrentMap(sMap, sizeof sMap);
 
-		EventMessage("Map Start", sMap).Dispatch();
+		EventMessage("**Map Start**", sMap).Dispatch();
 	}
 }
 
@@ -604,7 +611,7 @@ public void HandlePackets(const char[] sBuffer, int iSize)
 
 				GetCurrentMap(sMap, sizeof sMap);
 
-				EventMessage("Map Start", sMap).Dispatch();
+				EventMessage("**Map Start**", sMap).Dispatch();
 			}
 		}
 		default:
@@ -616,34 +623,46 @@ public void HandlePackets(const char[] sBuffer, int iSize)
 	base.Close();
 }
 
-public void OnClientConnected(int iClient)
+// player connect/disconnect events
+public void ePlayerJoinLeave(Handle event, const char[] name, bool dontBroadcast)
 {
+	bool connect;
+	int userid = GetEventInt(event, "userid");
+	int iClient = GetClientOfUserId(userid);
+	bool bot = view_as<bool>(GetEventInt(event, "bot"));
+
+	// If the userid is 0 that means they're connecting and we need to get their player slot instead
+	if (!iClient)
+	{
+		int slot = GetEventInt(event, "index");
+		iClient = slot+1;
+		connect = true;
+	}
+
+	if (!Client_IsValid(iClient, false))
+		return;
+
 	if (!g_cPlayerEvent.BoolValue)
 		return;
 
-	char sName[MAX_NAME_LENGTH];
-
-	if (!GetClientName(iClient, sName, sizeof sName))
-	{
-		return;
-	}
-
-	EventMessage("Player Connected", sName).Dispatch();
-}
-
-public void OnClientDisconnect(int iClient)
-{
-	if (!g_cPlayerEvent.BoolValue)
+	if (!g_cBotPlayerEvent.BoolValue && bot)
 		return;
 
 	char sName[MAX_NAME_LENGTH];
+	GetEventString(event, "name", sName, sizeof(sName), "");
 
-	if (!GetClientName(iClient, sName, sizeof sName))
+	if (name[0] == '\0')
 	{
+		#if defined DEBUG
+		PrintToServer("Client %N has no name (?)", iClient);
+		#endif
 		return;
 	}
 
-	EventMessage("Player Disconnected", sName).Dispatch();
+	if (connect)
+		EventMessage("*Player Connected*", sName).Dispatch();
+	else
+		EventMessage("*Player Disconnected*", sName).Dispatch();
 }
 
 public void OnMapEnd()
@@ -655,7 +674,7 @@ public void OnMapEnd()
 
 	GetCurrentMap(sMap, sizeof sMap);
 
-	EventMessage("Map Ended", sMap).Dispatch();
+	EventMessage("**Map Ended**", sMap).Dispatch();
 }
 
 public void OnClientSayCommand_Post(int client, const char[] command, const char[] sArgs)
